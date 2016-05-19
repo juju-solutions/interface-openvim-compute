@@ -4,14 +4,14 @@ from charms.reactive import scopes
 
 
 class RequiresOpenVIMCompute(RelationBase):
-    scope = scopes.UNIT
+    scope = scopes.GLOBAL
 
-    auto_accessors = ['hostname', 'user']
+    auto_accessors = ['user', 'ssh_key_installed']
 
     @hook('{requires:openvim-compute}-relation-{joined,changed}')
     def changed(self):
         self.set_state('{relation_name}.connected')
-        if self.connection():
+        if self.connection() and self.ssh_key_installed():
             self.set_state('{relation_name}.available')
 
     @hook('{requires:openvim-compute}-relation-{broken,departed}')
@@ -19,21 +19,15 @@ class RequiresOpenVIMCompute(RelationBase):
         self.remove_state('{relation_name}.connected')
         self.remove_state('{relation_name}.available')
 
-    def send_ssh_key(key):
+    def send_ssh_key(self, key):
         conv = self.conversation()
-        conv.set_remote('key', key)
+        conv.set_remote('ssh_key', key)
 
-    def address():
+    def address(self):
         conv = self.conversation()
         return conv.get_remote('private-address')
 
-    def list_nodes():
-        for convo in self.conversations()
-            yield convo
-
-    def connection():
-        hostname = self.hostname()
+    def connection(self):
         user = self.user()
         address = self.address()
-
-        return address and hostname and user
+        return address and user
