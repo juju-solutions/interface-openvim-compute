@@ -11,7 +11,7 @@ class RequiresOpenVIMCompute(RelationBase):
     @hook('{requires:openvim-compute}-relation-{joined,changed}')
     def changed(self):
         self.set_state('{relation_name}.connected')
-        if self.connection() and self.ssh_key_installed():
+        if self.ready_to_ssh():
             self.set_state('{relation_name}.available')
 
     @hook('{requires:openvim-compute}-relation-{broken,departed}')
@@ -27,7 +27,8 @@ class RequiresOpenVIMCompute(RelationBase):
         conv = self.conversation()
         return conv.get_remote('private-address')
 
-    def connection(self):
+    def ready_to_ssh(self):
         user = self.user()
         address = self.address()
-        return address and user
+        key_installed = self.ssh_key_installed()
+        return address and user and key_installed
